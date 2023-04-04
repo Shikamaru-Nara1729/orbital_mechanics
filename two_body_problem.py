@@ -31,15 +31,17 @@ def two_body_eqn(y, t, m1, m2):
 
 def plot_per_frame(idx, position_vectors):
     ax.clear()
-    # Plotting m1 (in red) and m2 (in blue)
+    # Plotting m1 (in red)
     ax.plot3D(position_vectors[:idx+1, 0], position_vectors[:idx+1, 1], position_vectors[:idx+1, 2], 'red')
-    ax.plot3D(position_vectors[:idx+1, 3], position_vectors[:idx+1, 4], position_vectors[:idx+1, 5], 'blue')
     ax.scatter(position_vectors[idx, 0], position_vectors[idx, 1], position_vectors[idx, 2], c='red', marker='o')
+
+    # Plotting m2 (in blue)
+    ax.plot3D(position_vectors[:idx+1, 3], position_vectors[:idx+1, 4], position_vectors[:idx+1, 5], 'blue')
     ax.scatter(position_vectors[idx, 3], position_vectors[idx, 4], position_vectors[idx, 5], c='blue', marker='o')
 
     # Plotting the centre of mass (in black)
     ax.plot3D(position_vectors[:idx+1, 12], position_vectors[:idx+1, 13], position_vectors[:idx+1, 14], 'black')
-    ax.scatter(position_vectors[idx, 12], position_vectors[idx, 13], position_vectors[idx, 14], c='black', marker='o')
+    ax.scatter(position_vectors[idx, 12], position_vectors[idx, 13], position_vectors[idx, 14], c='black', marker='x')
 
     plt.title('Two-Body Orbit')
     ax.set_xlabel('X [km]')
@@ -72,7 +74,7 @@ def plot_per_frame_about_m1(idx, position_vectors):
 
     # Plotting G, the centre of mass (in black)
     ax.plot3D(g[:idx+1, 0], g[:idx+1, 1], g[:idx+1, 2], 'black')
-    ax.scatter(g[idx, 0], g[idx, 1], g[idx, 2], c='black', marker='o')
+    ax.scatter(g[idx, 0], g[idx, 1], g[idx, 2], c='black', marker='x')
 
     ax.set_xlabel('X [km]')
     ax.set_ylabel('Y [km]')
@@ -104,7 +106,7 @@ def plot_per_frame_about_g(idx, position_vectors):
 
     # Plotting G, the centre of mass (in black)
     ax.plot3D(g[:idx+1, 0], g[:idx+1, 1], g[:idx+1, 2], 'black')
-    ax.scatter(g[idx, 0], g[idx, 1], g[idx, 2], c='black', marker='o')
+    ax.scatter(g[idx, 0], g[idx, 1], g[idx, 2], c='black', marker='x')
 
     ax.set_xlabel('X [km]')
     ax.set_ylabel('Y [km]')
@@ -117,7 +119,6 @@ def plot_per_frame_about_g(idx, position_vectors):
     ax.set_xlim3d(XYZlim)
     ax.set_ylim3d(XYZlim)
     ax.set_zlim3d(XYZlim)
-
 
 
 def generate_positions():
@@ -144,24 +145,16 @@ def generate_positions():
     return np.array(position_vectors)
 
 
+def visualise_trajectory(function, position_vectors):
+    line_ani = animation.FuncAnimation(fig, function, interval=30, frames=len(time), fargs=(position_vectors,), repeat=False)
+    plt.show()
+
+
 if __name__ == "__main__":
     position_vectors = generate_positions()
 
-    ## Plotting the Animation
-    ## Plotting m1, m2 and CoM in Inertial Frame
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    line_ani = animation.FuncAnimation(fig, plot_per_frame, interval=30, frames=len(time), fargs=(position_vectors,), repeat=False)
-    plt.show()
-
-    ## Plotting CoM and m2 about m1
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    line_ani = animation.FuncAnimation(fig, plot_per_frame_about_m1, interval=30, frames=len(time), fargs=(position_vectors,), repeat=False)
-    plt.show()
-
-    ## Plotting m1 and m2 about CoM
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    line_ani = animation.FuncAnimation(fig, plot_per_frame_about_g, interval=30, frames=len(time), fargs=(position_vectors,), repeat=False)
-    plt.show()
+    functions = [plot_per_frame, plot_per_frame_about_m1, plot_per_frame_about_g]
+    for function in functions:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        visualise_trajectory(function, position_vectors)
