@@ -4,6 +4,7 @@
 ### 2. https://towardsdatascience.com/how-to-animate-plots-in-python-2512327c8263
 ### 3. https://towardsdatascience.com/use-python-to-create-two-body-orbits-a68aed78099c
 ### 4. https://towardsdatascience.com/modelling-the-three-body-problem-in-classical-mechanics-using-python-9dc270ad7767
+### 5. https://observablehq.com/@rreusser/periodic-planar-three-body-orbits
 ###
 ### Code is written solely for entertainment purpose and to gain a better understanding
 ### of the orbital equations given in the Howard Curtis book "Orbital Mechanics for
@@ -19,7 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import os
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 
 
 plt.rcParams['axes.grid'] = True
@@ -31,7 +32,7 @@ def dist_cubed(r):
     return np.power(np.linalg.norm(r), 3)
 
 
-def three_body_eqn(y, t, m1, m2, m3):
+def three_body_eqn(t,y, m1, m2, m3):
     r1, r2, r3 = y[:3], y[3:6], y[6:9]
     r12, r13, r23 = dist_cubed(r2 - r1), dist_cubed(r3 - r1), dist_cubed(r3 - r2)
 
@@ -151,20 +152,55 @@ def plot_per_frame_about_g(idx, position_vectors):
 def generate_positions():
     position_vectors = []
     # body m1 initial conditions
-    m1, r10, v10 = 1e26, np.array([0, 0, 0]), np.array([10, 20, 30])  # Units: kg, km, km/s
+    # m1, r10, v10 = 1e26, np.array([0, 0, 0]), np.array([10, 20, 30])  # Units: kg, km, km/s
 
-    # body m2 initial conditions
-    m2, r20, v20 = 1e26, np.array([1000, 0, 0]), np.array([0, 40, 0])   # Units: kg, km, km/s
+    # # body m2 initial conditions
+    # m2, r20, v20 = 1e26, np.array([1000, 0, 0]), np.array([0, 40, 0])   # Units: kg, km, km/s
 
-    # body m3 initial conditions
-    m3, r30, v30 = 1e26, np.array([2000, 0, 0]), np.array([20, 20, 20])   # Units: kg, km, km/s
+    # # body m3 initial conditions
+    # m3, r30, v30 = 10, np.array([-200, 0, 0]), np.array([2, 2, 2])   # Units: kg, km, km/s
 
+#---------------------------------------------------------Some Initial Conditions for interesting orbits---------------------------------------------
+    # Figure 8
+    # m1 = m2 = m3 = 1.5e20  
+    # r10 = 10*np.array([0.9700436, -0.24308753, 0])
+    # r20 = 10*np.array([-0.9700436, 0.24308753, 0]) 
+    # r30 = np.array([0, 0, 0])  
+    # v10 = np.array([0.466203685, 0.43236573, 0]) 
+    # v20 = np.array([0.466203685, 0.43236573, 0]) 
+    # v30 = np.array([-2*0.466203685, -2*0.43236573, 0]) 
+
+    # Three Ovals
+    # m1 = m2 = m3 = 1.5e20
+    # r10 = 10*np.array([-0.98926200436,0, 0])
+    # r20 = 10*np.array([2.2096177241,0, 0]) 
+    # r30 = 10*np.array([-1.2203557197, 0, 0])  
+    # v10 = np.array([0,1.9169244185, 0]) 
+    # v20 = np.array([0,0.1910268738, 0]) 
+    # v30 = np.array([0,-2.1079512924, 0]) 
+
+    # Flower
+    m1 = m2 = m3 = 1.5e20
+    r10 = 10*np.array([0.0132604844,0, 0])
+    r20 = 10*np.array([1.4157286016,0, 0]) 
+    r30 = 10*np.array([-1.4289890859, 0,0])  
+    v10 = np.array([0,1.054151921, 0]) 
+    v20 = np.array([0,-0.2101466639, 0]) 
+    v30 = np.array([0,-0.8440052572, 0]) 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------
     # Input format for the initial conditions for the odeint function
     # [X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3, VX1, VY1, VZ1, VX2, VY2, VZ2, VX3, VY3, VZ3]
     # [(0) (1) (2) (3) (4) (5) (6) (7) (8) (9)  (10) (11) (12) (13) (14) (15) (16) (17)]
     y0 = np.concatenate((r10, r20, r30, v10, v20, v30))
-    y = odeint(three_body_eqn, y0, time, args=(m1, m2, m3))
-    for y_k in y:
+    t_span = [0, 480]  # Start and end times
+    t_eval = np.linspace(t_span[0], t_span[1], len(time))  # Time points at which to store the solution
+
+    # Solve the ODE
+    sol = solve_ivp(three_body_eqn, t_span, y0, method='DOP853', t_eval=t_eval, args=(m1, m2, m3))
+
+    if not sol.success:
+        raise RuntimeError("ODE solver did not converge")
+    for y_k in sol.y.T:
         r1, r2, r3 = y_k[:3], y_k[3:6], y_k[6:9]  # Positions of m1, m2 and m3
         rg = ((m1 * r1) + (m2 * r2) + (m3 * r3)) / (m1 + m2 + m3)  # Calculation for G, the centre of mass
 
